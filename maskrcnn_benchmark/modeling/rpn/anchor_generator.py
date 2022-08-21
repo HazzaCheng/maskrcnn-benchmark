@@ -111,6 +111,7 @@ class AnchorGenerator(nn.Module):
 
     def forward(self, image_list, feature_maps):
         grid_sizes = [feature_map.shape[-2:] for feature_map in feature_maps]
+        # 将 anchors 映射到特征图上
         anchors_over_all_feature_maps = self.grid_anchors(grid_sizes)
         anchors = []
         for i, (image_height, image_width) in enumerate(image_list.image_sizes):
@@ -119,6 +120,7 @@ class AnchorGenerator(nn.Module):
                 boxlist = BoxList(
                     anchors_per_feature_map, (image_width, image_height), mode="xyxy"
                 )
+                # 用来 prune 在边缘的 box
                 self.add_visibility_to(boxlist)
                 anchors_in_image.append(boxlist)
             anchors.append(anchors_in_image)
@@ -144,12 +146,12 @@ def make_anchor_generator(config):
 
 
 def make_anchor_generator_retinanet(config):
-    anchor_sizes = config.MODEL.RETINANET.ANCHOR_SIZES
-    aspect_ratios = config.MODEL.RETINANET.ASPECT_RATIOS
-    anchor_strides = config.MODEL.RETINANET.ANCHOR_STRIDES
-    straddle_thresh = config.MODEL.RETINANET.STRADDLE_THRESH
-    octave = config.MODEL.RETINANET.OCTAVE
-    scales_per_octave = config.MODEL.RETINANET.SCALES_PER_OCTAVE
+    anchor_sizes = config.MODEL.RETINANET.ANCHOR_SIZES  # e.g. (32, 64, 128, 256, 512)
+    aspect_ratios = config.MODEL.RETINANET.ASPECT_RATIOS    # e.g. (0.5, 1.0, 2.0)
+    anchor_strides = config.MODEL.RETINANET.ANCHOR_STRIDES  # e.g. (8, 16, 32, 64, 128)
+    straddle_thresh = config.MODEL.RETINANET.STRADDLE_THRESH    # e.g. 0
+    octave = config.MODEL.RETINANET.OCTAVE  # e.g. 2.0
+    scales_per_octave = config.MODEL.RETINANET.SCALES_PER_OCTAVE    # e.g. 3
 
     assert len(anchor_strides) == len(anchor_sizes), "Only support FPN now"
     new_anchor_sizes = []

@@ -174,6 +174,7 @@ class RetinaNetPostProcessor(RPNPostProcessor):
 
 
 def make_retinanet_postprocessor(config, rpn_box_coder, is_train):
+    # 用来删除冗余重合的和得分低的 box
     pre_nms_thresh = config.MODEL.RETINANET.INFERENCE_TH
     pre_nms_top_n = config.MODEL.RETINANET.PRE_NMS_TOP_N
     nms_thresh = config.MODEL.RETINANET.NMS_TH

@@ -53,10 +53,12 @@ class RetinaNetHead(torch.nn.Module):
 
         self.add_module('cls_tower', nn.Sequential(*cls_tower))
         self.add_module('bbox_tower', nn.Sequential(*bbox_tower))
+        # 预测 anchor 的类
         self.cls_logits = nn.Conv2d(
             in_channels, num_anchors * num_classes, kernel_size=3, stride=1,
             padding=1
         )
+        # 预测 anchor 的坐标
         self.bbox_pred = nn.Conv2d(
             in_channels,  num_anchors * 4, kernel_size=3, stride=1,
             padding=1
@@ -68,12 +70,14 @@ class RetinaNetHead(torch.nn.Module):
             for l in modules.modules():
                 if isinstance(l, nn.Conv2d):
                     torch.nn.init.normal_(l.weight, std=0.01)
+                    # bias 都初始化为 0
                     torch.nn.init.constant_(l.bias, 0)
 
 
         # retinanet_bias_init
         prior_prob = cfg.MODEL.RETINANET.PRIOR_PROB
         bias_value = -math.log((1 - prior_prob) / prior_prob)
+        # 类别输出的 conv 的 bias 需要特别初始化
         torch.nn.init.constant_(self.cls_logits.bias, bias_value)
 
     def forward(self, x):
@@ -95,7 +99,7 @@ class RetinaNetModule(torch.nn.Module):
         super(RetinaNetModule, self).__init__()
 
         self.cfg = cfg.clone()
-
+        # 生成每层特征图一个个 box 一样的 anchor
         anchor_generator = make_anchor_generator_retinanet(cfg)
         head = RetinaNetHead(cfg, in_channels)
         box_coder = BoxCoder(weights=(10., 10., 5., 5.))
@@ -124,6 +128,7 @@ class RetinaNetModule(torch.nn.Module):
             losses (dict[Tensor]): the losses for the model during training. During
                 testing, it is an empty dict.
         """
+        # 输出每个 anchor 的预测类的 logits 和 box 的预测
         box_cls, box_regression = self.head(features)
         anchors = self.anchor_generator(images, features)
  

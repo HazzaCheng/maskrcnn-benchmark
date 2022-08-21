@@ -45,7 +45,9 @@ class GeneralizedRCNN(nn.Module):
         """
         if self.training and targets is None:
             raise ValueError("In training mode, targets should be passed")
+        # 主要包含了图片的 tensor 和它们对应的 size
         images = to_image_list(images)
+        # 包含 resnet 和 fpn，输出 tuple(tensor)
         features = self.backbone(images.tensors)
         proposals, proposal_losses = self.rpn(images, features, targets)
         if self.roi_heads:
